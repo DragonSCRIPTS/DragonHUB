@@ -1,8 +1,45 @@
 -- UILibrary - init.lua
 -- Biblioteca para criação de interface com abas, seções, botões, toggles e função de arrastar.
--- Versão melhorada com suporte para arrastar a janela.
+-- Versão melhorada com suporte para arrastar a janela e tema visual aprimorado.
 
 local Library = {}
+
+-- Definição de temas e cores
+local Theme = {
+    Primary = Color3.fromRGB(32, 34, 37),      -- Cor principal escura
+    Secondary = Color3.fromRGB(44, 46, 51),    -- Secundária
+    Accent = Color3.fromRGB(0, 170, 255),      -- Azul vibrante
+    Text = Color3.fromRGB(240, 240, 240),      -- Texto branco
+    Background = Color3.fromRGB(24, 25, 28),   -- Fundo escuro
+    Border = Color3.fromRGB(60, 63, 70)        -- Bordas
+}
+
+-- Função para aplicar cantos arredondados
+local function applyCorners(instance, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(radius or 0.2, 0)
+    corner.Parent = instance
+    return corner
+end
+
+-- Função para aplicar sombras suaves
+local function applyShadow(instance)
+    local shadow = Instance.new("UIStroke")
+    shadow.Color = Theme.Border
+    shadow.Thickness = 1
+    shadow.Transparency = 0.8
+    shadow.Parent = instance
+    return shadow
+end
+
+-- Função para aplicar padding consistente
+local function applyPadding(instance)
+    local padding = Instance.new("UIPadding")
+    padding.PaddingLeft = UDim.new(0, 15)
+    padding.PaddingRight = UDim.new(0, 15)
+    padding.Parent = instance
+    return padding
+end
 
 -- Função para criar a janela principal
 function Library:CreateWindow(options)
@@ -19,14 +56,18 @@ function Library:CreateWindow(options)
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 400, 0, 300)
     mainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BackgroundColor3 = Theme.Primary
     mainFrame.Parent = screenGui
+    applyCorners(mainFrame, 0.02)
+    applyShadow(mainFrame)
+    applyPadding(mainFrame)
     
     -- Cria a barra de título (para arrastar)
     local titleBar = Instance.new("Frame")
     titleBar.Size = UDim2.new(1, 0, 0, 25)
-    titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    titleBar.BackgroundColor3 = Theme.Secondary
     titleBar.Parent = mainFrame
+    applyCorners(titleBar, 0.2)
     
     -- Título da janela
     local titleText = Instance.new("TextLabel")
@@ -34,23 +75,35 @@ function Library:CreateWindow(options)
     titleText.Position = UDim2.new(0, 10, 0, 0)
     titleText.BackgroundTransparency = 1
     titleText.Text = options.Name or "UI Library"
-    titleText.TextColor3 = Color3.new(1, 1, 1)
+    titleText.TextColor3 = Theme.Text
     titleText.TextXAlignment = Enum.TextXAlignment.Left
     titleText.Parent = titleBar
+    
+    -- Adicionar gradiente no título
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Theme.Accent),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 140, 255))
+    })
+    gradient.Rotation = 90
+    gradient.Parent = titleText
+    titleText.TextTransparency = 0.2
     
     -- Cria o container para as abas (lado esquerdo)
     local tabContainer = Instance.new("Frame")
     tabContainer.Size = UDim2.new(0, 100, 1, -25)
     tabContainer.Position = UDim2.new(0, 0, 0, 25)
-    tabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    tabContainer.BackgroundColor3 = Theme.Secondary
     tabContainer.Parent = mainFrame
+    applyPadding(tabContainer)
 
     -- Cria o container para o conteúdo das abas
     local contentContainer = Instance.new("Frame")
     contentContainer.Size = UDim2.new(1, -100, 1, -25)
     contentContainer.Position = UDim2.new(0, 100, 0, 25)
-    contentContainer.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    contentContainer.BackgroundColor3 = Theme.Background
     contentContainer.Parent = mainFrame
+    applyPadding(contentContainer)
 
     -- Configurações da janela
     window.ScreenGui = screenGui
@@ -106,10 +159,29 @@ function Library:CreateWindow(options)
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 20, 0, 20)
     closeButton.Position = UDim2.new(1, -25, 0, 2.5)
-    closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
     closeButton.Text = "X"
-    closeButton.TextColor3 = Color3.new(1, 1, 1)
+    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeButton.Parent = titleBar
+    applyCorners(closeButton, 0.3)
+    applyShadow(closeButton)
+    
+    -- Adicionar efeito hover no botão fechar
+    closeButton.MouseEnter:Connect(function()
+        game:GetService("TweenService"):Create(
+            closeButton,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = Color3.fromRGB(255, 80, 80)}
+        ):Play()
+    end)
+    
+    closeButton.MouseLeave:Connect(function()
+        game:GetService("TweenService"):Create(
+            closeButton,
+            TweenInfo.new(0.2),
+            {BackgroundColor3 = Color3.fromRGB(220, 70, 70)}
+        ):Play()
+    end)
     
     closeButton.MouseButton1Click:Connect(function()
         screenGui.Enabled = false
@@ -158,11 +230,24 @@ function Library:CreateWindow(options)
 
         -- Cria o botão da aba no container de abas
         local tabButton = Instance.new("TextButton")
-        tabButton.Size = UDim2.new(1, 0, 0, 30)
-        tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        tabButton.Size = UDim2.new(1, -10, 0, 30)
+        tabButton.Position = UDim2.new(0, 5, 0, (#window.Tabs * 35) + 5)
+        tabButton.BackgroundColor3 = Theme.Secondary
         tabButton.Text = tab.Title
+        tabButton.TextColor3 = Theme.Text
         tabButton.Parent = window.TabContainer
         tab.Button = tabButton
+        applyCorners(tabButton, 0.15)
+        applyShadow(tabButton)
+        
+        -- Adicionar highlight na aba
+        local tabHighlight = Instance.new("Frame")
+        tabHighlight.Size = UDim2.new(0, 3, 0.8, 0)
+        tabHighlight.Position = UDim2.new(0, 0, 0.1, 0)
+        tabHighlight.BackgroundColor3 = Theme.Accent
+        tabHighlight.Visible = false
+        tabHighlight.Parent = tabButton
+        applyCorners(tabHighlight, 0.5)
         
         -- Atualizar o canvas size baseado nos elementos
         listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -173,30 +258,53 @@ function Library:CreateWindow(options)
         tabButton.MouseButton1Click:Connect(function()
             for _, t in pairs(window.Tabs) do
                 t.Content.Visible = false
-                t.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                t.Button.BackgroundColor3 = Theme.Secondary
+                -- Esconder highlight em todas as abas
+                for _, child in pairs(t.Button:GetChildren()) do
+                    if child:IsA("Frame") and child.Size.X.Scale == 0 then
+                        child.Visible = false
+                    end
+                end
             end
             tab.Content.Visible = true
-            tab.Button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            
+            -- Animar a aba selecionada
+            game:GetService("TweenService"):Create(
+                tabButton,
+                TweenInfo.new(0.2),
+                {BackgroundColor3 = Theme.Accent}
+            ):Play()
+            
+            -- Mostrar highlight com animação
+            tabHighlight.Visible = true
+            tabHighlight.BackgroundTransparency = 1
+            game:GetService("TweenService"):Create(
+                tabHighlight,
+                TweenInfo.new(0.2),
+                {BackgroundTransparency = 0}
+            ):Play()
         end)
 
         -- Se for a primeira aba, exibe-a automaticamente
         if #window.Tabs == 0 then
             tab.Content.Visible = true
-            tabButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+            tabButton.BackgroundColor3 = Theme.Accent
+            tabHighlight.Visible = true
         end
 
         -- Método para adicionar uma seção na aba (ex.: título de grupo)
         function tab:AddSection(title)
             local section = Instance.new("Frame")
             section.Size = UDim2.new(1, 0, 0, 30)
-            section.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            section.BackgroundColor3 = Theme.Secondary
             section.Parent = tab.Content
+            applyCorners(section, 0.1)
             
             local sectionTitle = Instance.new("TextLabel")
             sectionTitle.Size = UDim2.new(1, 0, 1, 0)
             sectionTitle.BackgroundTransparency = 1
             sectionTitle.Text = title or "Section"
-            sectionTitle.TextColor3 = Color3.new(1, 1, 1)
+            sectionTitle.TextColor3 = Theme.Text
             sectionTitle.Font = Enum.Font.SourceSansBold
             sectionTitle.Parent = section
             
@@ -213,18 +321,28 @@ function Library:CreateWindow(options)
             
             local button = Instance.new("TextButton")
             button.Size = UDim2.new(1, 0, 1, 0)
-            button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            button.BackgroundColor3 = Theme.Secondary
             button.Text = buttonOptions.Title or "Button"
-            button.TextColor3 = Color3.new(1, 1, 1)
+            button.TextColor3 = Theme.Text
             button.Parent = buttonContainer
+            applyCorners(button, 0.15)
+            applyShadow(button)
             
-            -- Efeito de hover
+            -- Efeito de hover com animação
             button.MouseEnter:Connect(function()
-                button.BackgroundColor3 = Color3.fromRGB(90, 90, 90)
+                game:GetService("TweenService"):Create(
+                    button,
+                    TweenInfo.new(0.2),
+                    {BackgroundColor3 = Theme.Accent, Size = UDim2.new(0.98, 0, 0.95, 0)}
+                ):Play()
             end)
             
             button.MouseLeave:Connect(function()
-                button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+                game:GetService("TweenService"):Create(
+                    button,
+                    TweenInfo.new(0.2),
+                    {BackgroundColor3 = Theme.Secondary, Size = UDim2.new(1, 0, 1, 0)}
+                ):Play()
             end)
             
             button.MouseButton1Click:Connect(function()
@@ -250,23 +368,35 @@ function Library:CreateWindow(options)
             local toggleButton = Instance.new("TextButton")
             toggleButton.Size = UDim2.new(1, -30, 1, 0)
             toggleButton.Position = UDim2.new(0, 0, 0, 0)
-            toggleButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            toggleButton.BackgroundColor3 = Theme.Secondary
             toggleButton.Text = toggleOptions.Title or "Toggle"
-            toggleButton.TextColor3 = Color3.new(1, 1, 1)
+            toggleButton.TextColor3 = Theme.Text
             toggleButton.TextXAlignment = Enum.TextXAlignment.Left
             toggleButton.Parent = toggleContainer
+            applyCorners(toggleButton, 0.15)
+            applyShadow(toggleButton)
             
             -- Padding para o texto
             local textPadding = Instance.new("UIPadding")
             textPadding.PaddingLeft = UDim.new(0, 10)
             textPadding.Parent = toggleButton
             
+            -- Criar o container do toggle
+            local toggleTrack = Instance.new("Frame")
+            toggleTrack.Size = UDim2.new(0, 50, 0, 25)
+            toggleTrack.Position = UDim2.new(1, -65, 0.5, -12)
+            toggleTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            toggleTrack.Parent = toggleButton
+            applyCorners(toggleTrack, 1)
+            
             -- Indicador visual do toggle
             local toggleIndicator = Instance.new("Frame")
             toggleIndicator.Size = UDim2.new(0, 20, 0, 20)
-            toggleIndicator.Position = UDim2.new(1, -25, 0.5, -10)
-            toggleIndicator.BackgroundColor3 = toggle.Value and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(200, 200, 200)
-            toggleIndicator.Parent = toggleButton
+            toggleIndicator.Position = toggle.Value and UDim2.new(1, -25, 0.5, -10) or UDim2.new(0, 5, 0.5, -10)
+            toggleIndicator.BackgroundColor3 = toggle.Value and Theme.Accent or Color3.fromRGB(200, 200, 200)
+            toggleIndicator.Parent = toggleTrack
+            applyCorners(toggleIndicator, 1)
+            applyShadow(toggleIndicator)
             
             local changedCallback = nil
             function toggle:OnChanged(callback)
@@ -275,7 +405,17 @@ function Library:CreateWindow(options)
             
             local function updateToggle()
                 toggle.Value = not toggle.Value
-                toggleIndicator.BackgroundColor3 = toggle.Value and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(200, 200, 200)
+                
+                -- Animação ao mudar o toggle
+                game:GetService("TweenService"):Create(
+                    toggleIndicator,
+                    TweenInfo.new(0.2),
+                    {
+                        BackgroundColor3 = toggle.Value and Theme.Accent or Color3.fromRGB(200, 200, 200),
+                        Position = toggle.Value and UDim2.new(1, -25, 0.5, -10) or UDim2.new(0, 5, 0.5, -10)
+                    }
+                ):Play()
+                
                 if changedCallback then
                     changedCallback(toggle.Value)
                 end
@@ -286,13 +426,24 @@ function Library:CreateWindow(options)
             -- Para acesso direto aos componentes visuais
             toggle.Container = toggleContainer
             toggle.Button = toggleButton
+            toggle.Track = toggleTrack
             toggle.Indicator = toggleIndicator
             
             -- Método para definir o valor programaticamente
             function toggle:SetValue(value)
                 if toggle.Value ~= value then
                     toggle.Value = value
-                    toggleIndicator.BackgroundColor3 = value and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(200, 200, 200)
+                    
+                    -- Animação ao definir o valor
+                    game:GetService("TweenService"):Create(
+                        toggleIndicator,
+                        TweenInfo.new(0.2),
+                        {
+                            BackgroundColor3 = value and Theme.Accent or Color3.fromRGB(200, 200, 200),
+                            Position = value and UDim2.new(1, -25, 0.5, -10) or UDim2.new(0, 5, 0.5, -10)
+                        }
+                    ):Play()
+                    
                     if changedCallback then
                         changedCallback(value)
                     end
@@ -319,7 +470,7 @@ function Library:CreateWindow(options)
             sliderTitle.Size = UDim2.new(1, 0, 0, 20)
             sliderTitle.BackgroundTransparency = 1
             sliderTitle.Text = sliderOptions.Title or "Slider"
-            sliderTitle.TextColor3 = Color3.new(1, 1, 1)
+            sliderTitle.TextColor3 = Theme.Text
             sliderTitle.TextXAlignment = Enum.TextXAlignment.Left
             sliderTitle.Parent = sliderContainer
             
@@ -328,27 +479,32 @@ function Library:CreateWindow(options)
             sliderValueDisplay.Position = UDim2.new(1, -40, 0, 0)
             sliderValueDisplay.BackgroundTransparency = 1
             sliderValueDisplay.Text = tostring(slider.Value)
-            sliderValueDisplay.TextColor3 = Color3.new(1, 1, 1)
+            sliderValueDisplay.TextColor3 = Theme.Text
             sliderValueDisplay.Parent = sliderContainer
             
             local sliderBackground = Instance.new("Frame")
             sliderBackground.Size = UDim2.new(1, 0, 0, 10)
             sliderBackground.Position = UDim2.new(0, 0, 0, 25)
-            sliderBackground.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            sliderBackground.BackgroundColor3 = Theme.Secondary
             sliderBackground.Parent = sliderContainer
+            applyCorners(sliderBackground, 1)
+            applyShadow(sliderBackground)
             
             local sliderFill = Instance.new("Frame")
             local fillSize = (slider.Value - slider.Min) / (slider.Max - slider.Min)
             sliderFill.Size = UDim2.new(fillSize, 0, 1, 0)
-            sliderFill.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+            sliderFill.BackgroundColor3 = Theme.Accent
             sliderFill.Parent = sliderBackground
+            applyCorners(sliderFill, 1)
             
             local sliderButton = Instance.new("TextButton")
-            sliderButton.Size = UDim2.new(0, 10, 0, 20)
-            sliderButton.Position = UDim2.new(fillSize, -5, 0, -5)
+            sliderButton.Size = UDim2.new(0, 20, 0, 20)
+            sliderButton.Position = UDim2.new(fillSize, -10, 0, -5)
             sliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             sliderButton.Text = ""
             sliderButton.Parent = sliderBackground
+            applyCorners(sliderButton, 1)
+            applyShadow(sliderButton)
             
             local changedCallback = nil
             function slider:OnChanged(callback)
@@ -359,8 +515,20 @@ function Library:CreateWindow(options)
                 local pos = math.clamp((input.Position.X - sliderBackground.AbsolutePosition.X) / sliderBackground.AbsoluteSize.X, 0, 1)
                 local value = math.floor(slider.Min + (slider.Max - slider.Min) * pos)
                 slider.Value = value
-                sliderFill.Size = UDim2.new(pos, 0, 1, 0)
-                sliderButton.Position = UDim2.new(pos, -5, 0, -5)
+                
+                -- Animação ao arrastar o slider
+                game:GetService("TweenService"):Create(
+                    sliderFill,
+                    TweenInfo.new(0.1),
+                    {Size = UDim2.new(pos, 0, 1, 0)}
+                ):Play()
+                
+                game:GetService("TweenService"):Create(
+                    sliderButton,
+                    TweenInfo.new(0.1),
+                    {Position = UDim2.new(pos, -10, 0, -5)}
+                ):Play()
+                
                 sliderValueDisplay.Text = tostring(value)
                 
                 if changedCallback then
@@ -400,8 +568,20 @@ function Library:CreateWindow(options)
                 if slider.Value ~= value then
                     slider.Value = value
                     local pos = (value - slider.Min) / (slider.Max - slider.Min)
-                    sliderFill.Size = UDim2.new(pos, 0, 1, 0)
-                    sliderButton.Position = UDim2.new(pos, -5, 0, -5)
+                    
+                    -- Animação ao definir o valor
+                    game:GetService("TweenService"):Create(
+                        sliderFill,
+                        TweenInfo.new(0.2),
+                        {Size = UDim2.new(pos, 0, 1, 0)}
+                    ):Play()
+                    
+                    game:GetService("TweenService"):Create(
+                        sliderButton,
+                        TweenInfo.new(0.2),
+                        {Position = UDim2.new(pos, -10, 0, -5)}
+                    ):Play()
+                    
                     sliderValueDisplay.Text = tostring(value)
                     
                     if changedCallback then
@@ -418,10 +598,73 @@ function Library:CreateWindow(options)
             
             return slider
         end
+        
+        -- Método para adicionar input de texto
+        function tab:AddTextBox(textBoxOptions)
+            textBoxOptions = textBoxOptions or {}
+            local textBox = {}
+            
+            local textBoxContainer = Instance.new("Frame")
+            textBoxContainer.Size = UDim2.new(1, 0, 0, 35)
+            textBoxContainer.BackgroundTransparency = 1
+            textBoxContainer.Parent = tab.Content
+            
+            local textBoxLabel = Instance.new("TextLabel")
+            textBoxLabel.Size = UDim2.new(0.3, 0, 1, 0)
+            textBoxLabel.BackgroundTransparency = 1
+            textBoxLabel.Text = textBoxOptions.Title or "Input:"
+            textBoxLabel.TextColor3 = Theme.Text
+            textBoxLabel.TextXAlignment = Enum.TextXAlignment.Left
+            textBoxLabel.Parent = textBoxContainer
+            
+            local textBoxInput = Instance.new("TextBox")
+            textBoxInput.Size = UDim2.new(0.7, 0, 1, 0)
+            textBoxInput.Position = UDim2.new(0.3, 0, 0, 0)
+            textBoxInput.BackgroundColor3 = Theme.Secondary
+            textBoxInput.Text = textBoxOptions.Default or ""
+            textBoxInput.PlaceholderText = textBoxOptions.Placeholder or "Enter text..."
+            textBoxInput.TextColor3 = Theme.Text
+            textBoxInput.Parent = textBoxContainer
+            applyCorners(textBoxInput, 0.1)
+            applyShadow(textBoxInput)
+            
+            local changedCallback = nil
+            function textBox:OnChanged(callback)
+                changedCallback = callback
+            end
+            
+            textBoxInput.FocusLost:Connect(function(enterPressed)
+                if changedCallback then
+                    changedCallback(textBoxInput.Text, enterPressed)
+                end
+            end)
+            
+            -- Para acesso direto aos componentes visuais
+            textBox.Container = textBoxContainer
+            textBox.Label = textBoxLabel
+            textBox.Input = textBoxInput
+            
+            -- Método para obter o valor atual
+            function textBox:GetValue()
+                return textBoxInput.Text
+            end
+            
+            -- Método para definir o valor programaticamente
+            function textBox:SetValue(value)
+                textBoxInput.Text = value or ""
+            end
+            
+            return textBox
+        end
 
         table.insert(window.Tabs, tab)
         return tab
     end
+
+    -- Aplicar cantos arredondados a todos os elementos principais
+    applyCorners(mainFrame, 0.02)
+    applyCorners(tabContainer, 0.02)
+    applyCorners(contentContainer, 0.02)
 
     return window
 end
