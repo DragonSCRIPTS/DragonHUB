@@ -1,0 +1,518 @@
+-- BloxFruitsUI.lua
+-- Biblioteca para criação de interfaces gráficas
+local TweenService = game:GetService("TweenService")
+
+local UILibrary = {}
+
+-- Cores padrão para a interface
+UILibrary.Colors = {
+    Background = Color3.fromRGB(30, 30, 30),
+    Content = Color3.fromRGB(40, 40, 40),
+    Header = Color3.fromRGB(45, 45, 45),
+    Button = Color3.fromRGB(60, 60, 60),
+    ButtonHover = Color3.fromRGB(80, 80, 80),
+    ButtonPressed = Color3.fromRGB(40, 40, 40),
+    Text = Color3.fromRGB(255, 255, 255),
+    SubText = Color3.fromRGB(200, 200, 200),
+    Success = Color3.fromRGB(0, 120, 0),
+    Error = Color3.fromRGB(120, 0, 0),
+    Dropdown = Color3.fromRGB(50, 50, 50)
+}
+
+-- Função para criar uma interface principal
+function UILibrary.CreateWindow(title, size)
+    -- Remover a GUI anterior se existir
+    if game:GetService("CoreGui"):FindFirstChild(title) then
+        game:GetService("CoreGui"):FindFirstChild(title):Destroy()
+    end
+
+    -- Criar a GUI principal
+    local MainGUI = Instance.new("ScreenGui")
+    MainGUI.Name = title
+    MainGUI.Parent = game:GetService("CoreGui")
+    MainGUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    -- Frame principal
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Parent = MainGUI
+    MainFrame.BackgroundColor3 = UILibrary.Colors.Background
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Position = UDim2.new(0.5, -size.X/2, 0.5, -size.Y/2)
+    MainFrame.Size = UDim2.new(0, size.X, 0, size.Y)
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+
+    -- Adicionar bordas arredondadas ao frame principal
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 5)
+    MainCorner.Parent = MainFrame
+
+    -- Título
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Parent = MainFrame
+    Title.BackgroundColor3 = UILibrary.Colors.Header
+    Title.BorderSizePixel = 0
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.Font = Enum.Font.SourceSansBold
+    Title.Text = title
+    Title.TextColor3 = UILibrary.Colors.Text
+    Title.TextSize = 18.000
+
+    -- Adicionar bordas arredondadas apenas no topo do título
+    local TitleCorner = Instance.new("UICorner")
+    TitleCorner.CornerRadius = UDim.new(0, 5)
+    TitleCorner.Parent = Title
+
+    -- Botão de fechar
+    local CloseButton = Instance.new("TextButton")
+    CloseButton.Name = "CloseButton"
+    CloseButton.Parent = MainFrame
+    CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    CloseButton.BorderSizePixel = 0
+    CloseButton.Position = UDim2.new(1, -25, 0, 5)
+    CloseButton.Size = UDim2.new(0, 20, 0, 20)
+    CloseButton.Font = Enum.Font.SourceSansBold
+    CloseButton.Text = "X"
+    CloseButton.TextColor3 = UILibrary.Colors.Text
+    CloseButton.TextSize = 14.000
+    
+    -- Adicionar bordas arredondadas ao botão fechar
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 4)
+    CloseCorner.Parent = CloseButton
+    
+    CloseButton.MouseButton1Click:Connect(function()
+        MainGUI:Destroy()
+    end)
+
+    -- Frame de conteúdo
+    local ContentFrame = Instance.new("Frame")
+    ContentFrame.Name = "ContentFrame"
+    ContentFrame.Parent = MainFrame
+    ContentFrame.BackgroundColor3 = UILibrary.Colors.Content
+    ContentFrame.BorderSizePixel = 0
+    ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+    ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+
+    -- Adicionar bordas arredondadas apenas na parte inferior
+    local ContentCorner = Instance.new("UICorner")
+    ContentCorner.CornerRadius = UDim.new(0, 5)
+    ContentCorner.Parent = ContentFrame
+
+    -- Adicionar scroll para conteúdo
+    local ScrollFrame = Instance.new("ScrollingFrame")
+    ScrollFrame.Name = "ScrollFrame"
+    ScrollFrame.Parent = ContentFrame
+    ScrollFrame.BackgroundTransparency = 1
+    ScrollFrame.BorderSizePixel = 0
+    ScrollFrame.Position = UDim2.new(0, 5, 0, 5)
+    ScrollFrame.Size = UDim2.new(1, -10, 1, -10)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ScrollFrame.ScrollBarThickness = 4
+    ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+    ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+    -- Layout para organizar os elementos
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Parent = ScrollFrame
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Padding = UDim.new(0, 5)
+
+    -- Padding para os elementos
+    local UIPadding = Instance.new("UIPadding")
+    UIPadding.Parent = ScrollFrame
+    UIPadding.PaddingLeft = UDim.new(0, 5)
+    UIPadding.PaddingRight = UDim.new(0, 5)
+    UIPadding.PaddingTop = UDim.new(0, 5)
+    UIPadding.PaddingBottom = UDim.new(0, 5)
+
+    -- Botão para mostrar/ocultar a interface
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "ToggleButton"
+    ToggleButton.Parent = MainGUI
+    ToggleButton.BackgroundColor3 = UILibrary.Colors.Header
+    ToggleButton.BorderSizePixel = 0
+    ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
+    ToggleButton.Size = UDim2.new(0, 40, 0, 40)
+    ToggleButton.Font = Enum.Font.SourceSansBold
+    ToggleButton.Text = string.sub(title, 1, 1)
+    ToggleButton.TextColor3 = UILibrary.Colors.Text
+    ToggleButton.TextSize = 20.000
+    ToggleButton.Draggable = true
+    ToggleButton.Active = true
+
+    -- Adicionar sombra ao botão
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 8)
+    ToggleCorner.Parent = ToggleButton
+
+    -- Função de toggle para mostrar/ocultar a GUI principal
+    local guiVisible = true
+    ToggleButton.MouseButton1Click:Connect(function()
+        guiVisible = not guiVisible
+        MainFrame.Visible = guiVisible
+    end)
+
+    -- Aplicar efeitos visuais aos botões
+    UILibrary.ApplyButtonEffects(CloseButton)
+    UILibrary.ApplyButtonEffects(ToggleButton)
+
+    -- Objeto para armazenar referências
+    local window = {
+        GUI = MainGUI,
+        MainFrame = MainFrame,
+        ContentFrame = ContentFrame,
+        ScrollFrame = ScrollFrame,
+        ToggleButton = ToggleButton
+    }
+
+    -- Métodos do objeto window
+    function window:AddLabel(text, textSize)
+        local Label = Instance.new("TextLabel")
+        Label.Name = "Label_" .. text:gsub("%s+", "_")
+        Label.Parent = self.ScrollFrame
+        Label.BackgroundColor3 = UILibrary.Colors.Content
+        Label.BackgroundTransparency = 1
+        Label.BorderSizePixel = 0
+        Label.Size = UDim2.new(1, 0, 0, textSize or 20)
+        Label.Font = Enum.Font.SourceSans
+        Label.Text = text
+        Label.TextColor3 = UILibrary.Colors.Text
+        Label.TextSize = textSize or 14
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.LayoutOrder = #self.ScrollFrame:GetChildren()
+        return Label
+    end
+
+    function window:AddSeparator()
+        local Separator = Instance.new("Frame")
+        Separator.Name = "Separator"
+        Separator.Parent = self.ScrollFrame
+        Separator.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        Separator.BorderSizePixel = 0
+        Separator.Size = UDim2.new(1, 0, 0, 1)
+        Separator.LayoutOrder = #self.ScrollFrame:GetChildren()
+        return Separator
+    end
+
+    function window:AddInformation(text)
+        local InfoLabel = Instance.new("TextLabel")
+        InfoLabel.Name = "InfoLabel"
+        InfoLabel.Parent = self.ScrollFrame
+        InfoLabel.BackgroundColor3 = UILibrary.Colors.Content
+        InfoLabel.BackgroundTransparency = 1
+        InfoLabel.BorderSizePixel = 0
+        InfoLabel.Size = UDim2.new(1, 0, 0, 60)
+        InfoLabel.AutomaticSize = Enum.AutomaticSize.Y
+        InfoLabel.Font = Enum.Font.SourceSans
+        InfoLabel.Text = text
+        InfoLabel.TextColor3 = UILibrary.Colors.SubText
+        InfoLabel.TextSize = 14
+        InfoLabel.TextWrapped = true
+        InfoLabel.TextXAlignment = Enum.TextXAlignment.Left
+        InfoLabel.TextYAlignment = Enum.TextYAlignment.Top
+        InfoLabel.LayoutOrder = #self.ScrollFrame:GetChildren()
+        return InfoLabel
+    end
+
+    function window:AddToggle(text, default, callback)
+        local toggleValue = default or false
+        
+        local ToggleFrame = Instance.new("Frame")
+        ToggleFrame.Name = "Toggle_" .. text:gsub("%s+", "_")
+        ToggleFrame.Parent = self.ScrollFrame
+        ToggleFrame.BackgroundTransparency = 1
+        ToggleFrame.Size = UDim2.new(1, 0, 0, 30)
+        ToggleFrame.LayoutOrder = #self.ScrollFrame:GetChildren()
+        
+        local ToggleButton = Instance.new("TextButton")
+        ToggleButton.Name = "ToggleButton"
+        ToggleButton.Parent = ToggleFrame
+        ToggleButton.BackgroundColor3 = toggleValue and UILibrary.Colors.Success or UILibrary.Colors.Error
+        ToggleButton.BorderSizePixel = 0
+        ToggleButton.Size = UDim2.new(1, 0, 1, 0)
+        ToggleButton.Font = Enum.Font.SourceSansBold
+        ToggleButton.Text = text .. ": " .. (toggleValue and "ON" or "OFF")
+        ToggleButton.TextColor3 = UILibrary.Colors.Text
+        ToggleButton.TextSize = 14
+        
+        local ToggleCorner = Instance.new("UICorner")
+        ToggleCorner.CornerRadius = UDim.new(0, 4)
+        ToggleCorner.Parent = ToggleButton
+        
+        UILibrary.ApplyButtonEffects(ToggleButton)
+        
+        ToggleButton.MouseButton1Click:Connect(function()
+            toggleValue = not toggleValue
+            ToggleButton.Text = text .. ": " .. (toggleValue and "ON" or "OFF")
+            ToggleButton.BackgroundColor3 = toggleValue and UILibrary.Colors.Success or UILibrary.Colors.Error
+            
+            if callback then
+                callback(toggleValue)
+            end
+        end)
+        
+        local toggle = {
+            Frame = ToggleFrame,
+            Button = ToggleButton,
+            Value = toggleValue
+        }
+        
+        function toggle:SetValue(value)
+            toggleValue = value
+            ToggleButton.Text = text .. ": " .. (toggleValue and "ON" or "OFF")
+            ToggleButton.BackgroundColor3 = toggleValue and UILibrary.Colors.Success or UILibrary.Colors.Error
+            
+            if callback then
+                callback(toggleValue)
+            end
+        end
+        
+        return toggle
+    end
+
+    function window:AddDropdown(text, options, default, callback)
+        local DropdownFrame = Instance.new("Frame")
+        DropdownFrame.Name = "Dropdown_" .. text:gsub("%s+", "_")
+        DropdownFrame.Parent = self.ScrollFrame
+        DropdownFrame.BackgroundTransparency = 1
+        DropdownFrame.Size = UDim2.new(1, 0, 0, 50)
+        DropdownFrame.LayoutOrder = #self.ScrollFrame:GetChildren()
+        
+        local Label = Instance.new("TextLabel")
+        Label.Name = "Label"
+        Label.Parent = DropdownFrame
+        Label.BackgroundTransparency = 1
+        Label.Size = UDim2.new(1, 0, 0, 20)
+        Label.Font = Enum.Font.SourceSans
+        Label.Text = text
+        Label.TextColor3 = UILibrary.Colors.Text
+        Label.TextSize = 14
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local DropdownButton = Instance.new("TextButton")
+        DropdownButton.Name = "DropdownButton"
+        DropdownButton.Parent = DropdownFrame
+        DropdownButton.BackgroundColor3 = UILibrary.Colors.Button
+        DropdownButton.BorderSizePixel = 0
+        DropdownButton.Position = UDim2.new(0, 0, 0, 20)
+        DropdownButton.Size = UDim2.new(1, 0, 0, 30)
+        DropdownButton.Font = Enum.Font.SourceSans
+        DropdownButton.Text = default or options[1] or "Select"
+        DropdownButton.TextColor3 = UILibrary.Colors.Text
+        DropdownButton.TextSize = 14
+        
+        local DropdownCorner = Instance.new("UICorner")
+        DropdownCorner.CornerRadius = UDim.new(0, 4)
+        DropdownCorner.Parent = DropdownButton
+        
+        local OptionsFrame = Instance.new("Frame")
+        OptionsFrame.Name = "OptionsFrame"
+        OptionsFrame.Parent = DropdownFrame
+        OptionsFrame.BackgroundColor3 = UILibrary.Colors.Dropdown
+        OptionsFrame.BorderSizePixel = 0
+        OptionsFrame.Position = UDim2.new(0, 0, 0, 50)
+        OptionsFrame.Size = UDim2.new(1, 0, 0, #options * 30)
+        OptionsFrame.Visible = false
+        OptionsFrame.ZIndex = 10
+        
+        local OptionsCorner = Instance.new("UICorner")
+        OptionsCorner.CornerRadius = UDim.new(0, 4)
+        OptionsCorner.Parent = OptionsFrame
+        
+        local OptionsLayout = Instance.new("UIListLayout")
+        OptionsLayout.Parent = OptionsFrame
+        OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        
+        UILibrary.ApplyButtonEffects(DropdownButton)
+        
+        local selectedOption = default or options[1] or "Select"
+        
+        for i, option in ipairs(options) do
+            local OptionButton = Instance.new("TextButton")
+            OptionButton.Name = "Option_" .. option:gsub("%s+", "_")
+            OptionButton.Parent = OptionsFrame
+            OptionButton.BackgroundColor3 = UILibrary.Colors.Button
+            OptionButton.BorderSizePixel = 0
+            OptionButton.Size = UDim2.new(1, 0, 0, 30)
+            OptionButton.Font = Enum.Font.SourceSans
+            OptionButton.Text = option
+            OptionButton.TextColor3 = UILibrary.Colors.Text
+            OptionButton.TextSize = 14
+            OptionButton.ZIndex = 11
+            OptionButton.LayoutOrder = i
+            
+            local OptionCorner = Instance.new("UICorner")
+            OptionCorner.CornerRadius = UDim.new(0, 2)
+            OptionCorner.Parent = OptionButton
+            
+            UILibrary.ApplyButtonEffects(OptionButton)
+            
+            OptionButton.MouseButton1Click:Connect(function()
+                selectedOption = option
+                DropdownButton.Text = option
+                OptionsFrame.Visible = false
+                
+                if callback then
+                    callback(option)
+                end
+            end)
+        end
+        
+        DropdownButton.MouseButton1Click:Connect(function()
+            OptionsFrame.Visible = not OptionsFrame.Visible
+        end)
+        
+        local dropdown = {
+            Frame = DropdownFrame,
+            Button = DropdownButton,
+            OptionsFrame = OptionsFrame,
+            Selected = selectedOption
+        }
+        
+        function dropdown:Select(option)
+            if table.find(options, option) then
+                selectedOption = option
+                DropdownButton.Text = option
+                
+                if callback then
+                    callback(option)
+                end
+            end
+        end
+        
+        return dropdown
+    end
+
+    function window:AddButton(text, callback)
+        local Button = Instance.new("TextButton")
+        Button.Name = "Button_" .. text:gsub("%s+", "_")
+        Button.Parent = self.ScrollFrame
+        Button.BackgroundColor3 = UILibrary.Colors.Button
+        Button.BorderSizePixel = 0
+        Button.Size = UDim2.new(1, 0, 0, 30)
+        Button.Font = Enum.Font.SourceSansBold
+        Button.Text = text
+        Button.TextColor3 = UILibrary.Colors.Text
+        Button.TextSize = 14
+        Button.LayoutOrder = #self.ScrollFrame:GetChildren()
+        
+        local ButtonCorner = Instance.new("UICorner")
+        ButtonCorner.CornerRadius = UDim.new(0, 4)
+        ButtonCorner.Parent = Button
+        
+        UILibrary.ApplyButtonEffects(Button)
+        
+        Button.MouseButton1Click:Connect(function()
+            if callback then
+                callback()
+            end
+        end)
+        
+        return Button
+    end
+
+    function window:Notify(title, text, duration)
+        local NotifyGui = Instance.new("ScreenGui")
+        NotifyGui.Name = "Notification"
+        NotifyGui.Parent = game:GetService("CoreGui")
+        
+        local NotifyFrame = Instance.new("Frame")
+        NotifyFrame.Name = "NotifyFrame"
+        NotifyFrame.Parent = NotifyGui
+        NotifyFrame.BackgroundColor3 = UILibrary.Colors.Background
+        NotifyFrame.BorderSizePixel = 0
+        NotifyFrame.Position = UDim2.new(1, 0, 0.75, 0)
+        NotifyFrame.Size = UDim2.new(0, 250, 0, 80)
+        
+        local NotifyCorner = Instance.new("UICorner")
+        NotifyCorner.CornerRadius = UDim.new(0, 5)
+        NotifyCorner.Parent = NotifyFrame
+        
+        local NotifyTitle = Instance.new("TextLabel")
+        NotifyTitle.Name = "Title"
+        NotifyTitle.Parent = NotifyFrame
+        NotifyTitle.BackgroundTransparency = 1
+        NotifyTitle.Size = UDim2.new(1, 0, 0, 25)
+        NotifyTitle.Font = Enum.Font.SourceSansBold
+        NotifyTitle.Text = title
+        NotifyTitle.TextColor3 = UILibrary.Colors.Text
+        NotifyTitle.TextSize = 16
+        
+        local NotifyContent = Instance.new("TextLabel")
+        NotifyContent.Name = "Content"
+        NotifyContent.Parent = NotifyFrame
+        NotifyContent.BackgroundTransparency = 1
+        NotifyContent.Position = UDim2.new(0, 0, 0, 25)
+        NotifyContent.Size = UDim2.new(1, 0, 1, -25)
+        NotifyContent.Font = Enum.Font.SourceSans
+        NotifyContent.Text = text
+        NotifyContent.TextColor3 = UILibrary.Colors.SubText
+        NotifyContent.TextSize = 14
+        NotifyContent.TextWrapped = true
+        
+        -- Animação de entrada
+        local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        local tween = TweenService:Create(NotifyFrame, tweenInfo, {Position = UDim2.new(0.98, -250, 0.75, 0)})
+        tween:Play()
+        
+        -- Remover após a duração
+        delay(duration or 5, function()
+            local tweenOut = TweenService:Create(NotifyFrame, tweenInfo, {Position = UDim2.new(1, 0, 0.75, 0)})
+            tweenOut:Play()
+            tweenOut.Completed:Connect(function()
+                NotifyGui:Destroy()
+            end)
+        end)
+    end
+
+    return window
+end
+
+-- Função para aplicar efeitos visuais aos botões
+function UILibrary.ApplyButtonEffects(button)
+    local originalColor = button.BackgroundColor3
+    
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = originalColor:Lerp(UILibrary.Colors.ButtonHover, 0.3)
+        }):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        -- Determinar a cor alvo baseada no estado atual do botão
+        local targetColor = originalColor
+        if button.Text:find("ON") then
+            targetColor = UILibrary.Colors.Success
+        elseif button.Text:find("OFF") then
+            targetColor = UILibrary.Colors.Error
+        end
+        
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = targetColor
+        }):Play()
+    end)
+    
+    button.MouseButton1Down:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {
+            BackgroundColor3 = originalColor:Lerp(UILibrary.Colors.ButtonPressed, 0.5)
+        }):Play()
+    end)
+    
+    button.MouseButton1Up:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {
+            BackgroundColor3 = originalColor:Lerp(UILibrary.Colors.ButtonHover, 0.3)
+        }):Play()
+    end)
+    
+    -- Atualizar a cor original quando ela mudar
+    button:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+        if button.BackgroundColor3 ~= originalColor then
+            originalColor = button.BackgroundColor3
+        end
+    end)
+end
+
+return UILibrary
