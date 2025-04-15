@@ -1,0 +1,189 @@
+-- Script para equipar arma e atacar automaticamente com interface gráfica
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local Mouse = LocalPlayer:GetMouse()
+
+-- Configurações
+_G.SelectWeapon = "Melee"  -- Tipo de arma inicial
+local attackCooldown = 0.5  -- Intervalo entre ataques (em segundos)
+local autoAttackEnabled = false  -- Ataque automático desativado por padrão
+
+-- Variáveis internas
+local lastAttackTime = 0
+local targetPart = nil
+local guiCreated = false
+
+-- FUNÇÃO: Equipar arma selecionada
+local function equipWeapon()
+    local selected = _G.SelectWeapon
+    local toolToEquip = nil
+    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if tool:IsA("Tool") then
+            if selected == "Melee" and tool.ToolTip == "Melee" then
+                toolToEquip = tool
+                break
+            elseif selected == "Sword" and tool.ToolTip == "Sword" then
+                toolToEquip = tool
+                break
+            elseif selected == "Fruit" and tool.ToolTip == "Blox Fruit" then
+                toolToEquip = tool
+                break
+            elseif selected == "Gun" and tool.ToolTip == "Gun" then
+                toolToEquip = tool
+                break
+            end
+        end
+    end
+    if toolToEquip then
+        Humanoid:EquipTool(toolToEquip)
+        print(selected .. " equipado com sucesso!")
+        return toolToEquip
+    else
+        warn("Erro: " .. selected .. " não encontrado no inventário!")
+        return nil
+    end
+end
+
+-- FUNÇÃO: Verificar cooldown do ataque
+local function canAttack()
+    return (tick() - lastAttackTime) >= attackCooldown
+end
+
+-- FUNÇÃO: Encontrar alvo próximo
+local function findTarget()
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {Character}
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+    local ray = workspace:Raycast(Mouse.UnitRay.Origin, Mouse.UnitRay.Direction * 100, rayParams)
+    return ray and ray.Instance
+end
+
+-- FUNÇÃO: Lógica principal de ataque
+local function attack()
+    if not canAttack() then return end
+
+    local equippedTool = nil
+    for _, tool in ipairs(Character:GetChildren()) do
+        if tool:IsA("Tool") and tool.ToolTip == _G.SelectWeapon then
+            equippedTool = tool
+            break
+        end
+    end
+
+    if equippedTool then
+        equippedTool:Activate()
+
+        if _G.SelectWeapon == "Gun" then
+            local target = findTarget()
+            if target then
+                local bullet = Instance.new("Part")
+                bullet.Size = Vector3.new(0.5, 0.5, 2)
+                bullet.CFrame = CFrame.lookAt(Mouse.Hit.Position, target.Position)
+                bullet.Anchored = true
+                bullet.CanCollide = false
+                bullet.BrickColor = BrickColor.new("Bright red")
+                bullet.Parent = workspace
+                delay(0.2, function() bullet:Destroy() end)
+            end
+        else
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://184517545"
+            local track = Humanoid:LoadAnimation(anim)
+            track:Play()
+            track:AdjustSpeed(1.5)
+        end
+
+        lastAttackTime = tick()
+    end
+end
+
+-- FUNÇÃO: Configurar ataque automático
+local function setupAutoAttack()
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            attack()
+        end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if autoAttackEnabled and canAttack() then
+            attack()
+        end
+    end)
+end
+
+-- FUNÇÃO: Criar interface gráfica
+local function createGUI()
+    if guiCreated then return end
+
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "WeaponSelector"
+    screenGui.Parent = LocalPlayer.PlayerGui
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 200, 0, 200)
+    mainFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = screenGui
+
+    local title = Instance.new("TextLabel")
+    title.Text = "Seletor de Armas"
+    title.Font = Enum.Font.GothamBold
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.BackgroundTransparency = 1
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.Parent = mainFrame
+
+    local weaponButtons = {}
+    local buttonSize = UDim2.new(1, 0, 0, 40)
+    local buttonPos = UDim2.new(0, 0, 0, 30)
+
+    for i, weapon in ipairs({"Melee", "Sword", "Fruit", "Gun"}) do
+        local btn = Instance.new("TextButton")
+        btn.Text = weapon
+        btn.Font = Enum.Font.Gotham
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.Size = buttonSize
+        btn.Position = buttonPos
+        btn.Parent = mainFrame
+
+        btn.MouseButton1Click:Connect(function()
+            _G.SelectWeapon = weapon
+            equipWeapon()
+            print("Arma selecionada: " .. weapon)
+        end)
+
+        table.insert(weaponButtons, btn)
+        buttonPos = UDim2.new(0, 0, 0, buttonPos.Y.Offset + 40)
+    end
+
+    local autoToggle = Instance.new("TextButton")
+    autoToggle.Text = "Ataque Automático: Desativado"
+    autoToggle.Font = Enum.Font.Gotham
+    autoToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    autoToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    autoToggle.Size = buttonSize
+    autoToggle.Position = UDim2.new(0, 0, 0, buttonPos.Y.Offset)
+    autoToggle.Parent = mainFrame
+
+    autoToggle.MouseButton1Click:Connect(function()
+        autoAttackEnabled = not autoAttackEnabled
+        autoToggle.Text = "Ataque Automático: " .. (autoAttackEnabled and "Ativado" or "Desativado")
+    end)
+
+    guiCreated = true
+end
+
+-- Lógica principal
+createGUI()
+equipWeapon()
+setupAutoAttack()
