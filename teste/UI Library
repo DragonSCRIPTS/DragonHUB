@@ -1,0 +1,446 @@
+-- Interface UI para script de Farm
+local Library = {}
+
+-- Função para criar a lib
+function Library:CreateLib(title, theme)
+    local UI = {}
+    local screenGui = Instance.new("ScreenGui")
+    local mainFrame = Instance.new("Frame")
+    local titleBar = Instance.new("Frame")
+    local titleText = Instance.new("TextLabel")
+    local tabContainer = Instance.new("Frame")
+    local tabContent = Instance.new("Frame")
+    
+    -- Configurações da ScreenGui
+    screenGui.Name = "FarmScript"
+    screenGui.Parent = game:GetService("CoreGui")
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Configurações do Frame Principal
+    mainFrame.Name = "MainFrame"
+    mainFrame.Parent = screenGui
+    mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+    mainFrame.Size = UDim2.new(0, 450, 0, 300)
+    mainFrame.Active = true
+    mainFrame.Draggable = true
+    
+    -- Barra de título
+    titleBar.Name = "TitleBar"
+    titleBar.Parent = mainFrame
+    titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    titleBar.BorderSizePixel = 0
+    titleBar.Size = UDim2.new(1, 0, 0, 30)
+    
+    -- Texto do título
+    titleText.Name = "TitleText"
+    titleText.Parent = titleBar
+    titleText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    titleText.BackgroundTransparency = 1
+    titleText.Position = UDim2.new(0, 10, 0, 0)
+    titleText.Size = UDim2.new(1, -10, 1, 0)
+    titleText.Font = Enum.Font.SourceSansBold
+    titleText.Text = title
+    titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleText.TextSize = 18
+    titleText.TextXAlignment = Enum.TextXAlignment.Left
+    
+    -- Container de abas
+    tabContainer.Name = "TabContainer"
+    tabContainer.Parent = mainFrame
+    tabContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    tabContainer.BorderSizePixel = 0
+    tabContainer.Position = UDim2.new(0, 0, 0, 30)
+    tabContainer.Size = UDim2.new(0, 120, 1, -30)
+    
+    -- Container de conteúdo das abas
+    tabContent.Name = "TabContent"
+    tabContent.Parent = mainFrame
+    tabContent.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    tabContent.BorderSizePixel = 0
+    tabContent.Position = UDim2.new(0, 120, 0, 30)
+    tabContent.Size = UDim2.new(1, -120, 1, -30)
+    
+    -- Tabelas para armazenar abas e seções
+    local tabs = {}
+    local tabButtons = {}
+    local tabFrames = {}
+    
+    -- Função para criar nova aba
+    function UI:NewTab(tabName)
+        local tab = {}
+        
+        -- Criar botão da aba
+        local tabButton = Instance.new("TextButton")
+        tabButton.Name = tabName .. "Button"
+        tabButton.Parent = tabContainer
+        tabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        tabButton.BorderSizePixel = 0
+        tabButton.Position = UDim2.new(0, 0, 0, #tabButtons * 30)
+        tabButton.Size = UDim2.new(1, 0, 0, 30)
+        tabButton.Font = Enum.Font.SourceSans
+        tabButton.Text = tabName
+        tabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+        tabButton.TextSize = 16
+        
+        -- Criar frame de conteúdo da aba
+        local tabFrame = Instance.new("ScrollingFrame")
+        tabFrame.Name = tabName .. "Frame"
+        tabFrame.Parent = tabContent
+        tabFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        tabFrame.BorderSizePixel = 0
+        tabFrame.Size = UDim2.new(1, 0, 1, 0)
+        tabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        tabFrame.ScrollBarThickness = 3
+        tabFrame.Visible = #tabFrames == 0 -- Primeira aba visível
+        
+        -- Adicionar à lista de abas
+        table.insert(tabButtons, tabButton)
+        table.insert(tabFrames, tabFrame)
+        
+        -- Evento de clique
+        tabButton.MouseButton1Click:Connect(function()
+            for _, frame in ipairs(tabFrames) do
+                frame.Visible = false
+            end
+            tabFrame.Visible = true
+            
+            for _, button in ipairs(tabButtons) do
+                button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+                button.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
+            tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end)
+        
+        -- Se for a primeira aba, destacar
+        if #tabButtons == 1 then
+            tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
+        
+        -- Função para criar seção
+        function tab:NewSection(sectionName)
+            local section = {}
+            local sectionFrame = Instance.new("Frame")
+            local sectionTitle = Instance.new("TextLabel")
+            local elementsContainer = Instance.new("Frame")
+            
+            -- Criar frame da seção
+            sectionFrame.Name = sectionName .. "Section"
+            sectionFrame.Parent = tabFrame
+            sectionFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            sectionFrame.BorderSizePixel = 0
+            sectionFrame.Position = UDim2.new(0, 10, 0, tabFrame.CanvasSize.Y.Offset + 10)
+            sectionFrame.Size = UDim2.new(1, -20, 0, 30) -- Altura inicial, será ajustada
+            
+            -- Título da seção
+            sectionTitle.Name = "SectionTitle"
+            sectionTitle.Parent = sectionFrame
+            sectionTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            sectionTitle.BackgroundTransparency = 1
+            sectionTitle.Position = UDim2.new(0, 5, 0, 0)
+            sectionTitle.Size = UDim2.new(1, -10, 0, 25)
+            sectionTitle.Font = Enum.Font.SourceSansSemibold
+            sectionTitle.Text = sectionName
+            sectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sectionTitle.TextSize = 16
+            sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+            
+            -- Container de elementos
+            elementsContainer.Name = "Elements"
+            elementsContainer.Parent = sectionFrame
+            elementsContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            elementsContainer.BorderSizePixel = 0
+            elementsContainer.Position = UDim2.new(0, 0, 0, 25)
+            elementsContainer.Size = UDim2.new(1, 0, 0, 5) -- Altura inicial
+            
+            -- Atualizar canvas
+            tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabFrame.CanvasSize.Y.Offset + sectionFrame.Size.Y.Offset + 20)
+            
+            -- Função para adicionar toggle
+            function section:addToggle(text, default, callback)
+                local toggleContainer = Instance.new("Frame")
+                local toggleButton = Instance.new("TextButton")
+                local toggleIndicator = Instance.new("Frame")
+                local toggleText = Instance.new("TextLabel")
+                local toggled = default or false
+                
+                -- Container do toggle
+                toggleContainer.Name = text .. "Toggle"
+                toggleContainer.Parent = elementsContainer
+                toggleContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                toggleContainer.BorderSizePixel = 0
+                toggleContainer.Position = UDim2.new(0, 0, 0, elementsContainer.Size.Y.Offset)
+                toggleContainer.Size = UDim2.new(1, 0, 0, 30)
+                
+                -- Texto do toggle
+                toggleText.Name = "ToggleText"
+                toggleText.Parent = toggleContainer
+                toggleText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                toggleText.BackgroundTransparency = 1
+                toggleText.Position = UDim2.new(0, 10, 0, 0)
+                toggleText.Size = UDim2.new(1, -60, 1, 0)
+                toggleText.Font = Enum.Font.SourceSans
+                toggleText.Text = text
+                toggleText.TextColor3 = Color3.fromRGB(200, 200, 200)
+                toggleText.TextSize = 15
+                toggleText.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- Botão do toggle
+                toggleButton.Name = "ToggleButton"
+                toggleButton.Parent = toggleContainer
+                toggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                toggleButton.BorderSizePixel = 0
+                toggleButton.Position = UDim2.new(1, -50, 0.5, -10)
+                toggleButton.Size = UDim2.new(0, 40, 0, 20)
+                toggleButton.Font = Enum.Font.SourceSans
+                toggleButton.Text = ""
+                toggleButton.AutoButtonColor = false
+                
+                -- Indicador do toggle
+                toggleIndicator.Name = "Indicator"
+                toggleIndicator.Parent = toggleButton
+                toggleIndicator.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+                toggleIndicator.BorderSizePixel = 0
+                toggleIndicator.Position = UDim2.new(0, 2, 0.5, -8)
+                toggleIndicator.Size = UDim2.new(0, 16, 0, 16)
+                
+                -- Atualizar estado inicial
+                if toggled then
+                    toggleIndicator.Position = UDim2.new(1, -18, 0.5, -8)
+                    toggleIndicator.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+                    callback(true)
+                end
+                
+                -- Evento de clique
+                toggleButton.MouseButton1Click:Connect(function()
+                    toggled = not toggled
+                    if toggled then
+                        toggleIndicator:TweenPosition(UDim2.new(1, -18, 0.5, -8), "Out", "Quad", 0.2, true)
+                        toggleIndicator.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+                    else
+                        toggleIndicator:TweenPosition(UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.2, true)
+                        toggleIndicator.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+                    end
+                    callback(toggled)
+                end)
+                
+                -- Atualizar tamanhos
+                elementsContainer.Size = UDim2.new(1, 0, 0, elementsContainer.Size.Y.Offset + 30)
+                sectionFrame.Size = UDim2.new(1, -20, 0, 25 + elementsContainer.Size.Y.Offset)
+                tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabFrame.CanvasSize.Y.Offset + 30)
+                
+                return toggleButton
+            end
+            
+            -- Função para adicionar dropdown
+            function section:addDropdown(text, default, options, callback)
+                local dropdownContainer = Instance.new("Frame")
+                local dropdownText = Instance.new("TextLabel")
+                local dropdownButton = Instance.new("TextButton")
+                local dropdownMenu = Instance.new("Frame")
+                local UIListLayout = Instance.new("UIListLayout")
+                
+                -- Container do dropdown
+                dropdownContainer.Name = text .. "Dropdown"
+                dropdownContainer.Parent = elementsContainer
+                dropdownContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                dropdownContainer.BorderSizePixel = 0
+                dropdownContainer.Position = UDim2.new(0, 0, 0, elementsContainer.Size.Y.Offset)
+                dropdownContainer.Size = UDim2.new(1, 0, 0, 50)
+                
+                -- Texto do dropdown
+                dropdownText.Name = "DropdownText"
+                dropdownText.Parent = dropdownContainer
+                dropdownText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                dropdownText.BackgroundTransparency = 1
+                dropdownText.Position = UDim2.new(0, 10, 0, 0)
+                dropdownText.Size = UDim2.new(1, -20, 0, 20)
+                dropdownText.Font = Enum.Font.SourceSans
+                dropdownText.Text = text
+                dropdownText.TextColor3 = Color3.fromRGB(200, 200, 200)
+                dropdownText.TextSize = 15
+                dropdownText.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- Botão do dropdown
+                dropdownButton.Name = "DropdownButton"
+                dropdownButton.Parent = dropdownContainer
+                dropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                dropdownButton.BorderSizePixel = 0
+                dropdownButton.Position = UDim2.new(0, 10, 0, 20)
+                dropdownButton.Size = UDim2.new(1, -20, 0, 25)
+                dropdownButton.Font = Enum.Font.SourceSans
+                dropdownButton.Text = default or "Select..."
+                dropdownButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+                dropdownButton.TextSize = 15
+                
+                -- Menu do dropdown
+                dropdownMenu.Name = "DropdownMenu"
+                dropdownMenu.Parent = dropdownButton
+                dropdownMenu.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                dropdownMenu.BorderSizePixel = 0
+                dropdownMenu.Position = UDim2.new(0, 0, 1, 0)
+                dropdownMenu.Size = UDim2.new(1, 0, 0, 0)
+                dropdownMenu.ZIndex = 5
+                dropdownMenu.Visible = false
+                dropdownMenu.ClipsDescendants = true
+                
+                -- Layout do menu
+                UIListLayout.Parent = dropdownMenu
+                UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                
+                -- Variáveis
+                local menuOpen = false
+                local menuSize = #options * 25
+                
+                -- Adicionar opções
+                for i, option in ipairs(options) do
+                    local optionButton = Instance.new("TextButton")
+                    optionButton.Name = option
+                    optionButton.Parent = dropdownMenu
+                    optionButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                    optionButton.BorderSizePixel = 0
+                    optionButton.Size = UDim2.new(1, 0, 0, 25)
+                    optionButton.Font = Enum.Font.SourceSans
+                    optionButton.Text = option
+                    optionButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+                    optionButton.TextSize = 15
+                    optionButton.ZIndex = 6
+                    
+                    optionButton.MouseButton1Click:Connect(function()
+                        dropdownButton.Text = option
+                        menuOpen = false
+                        dropdownMenu:TweenSize(UDim2.new(1, 0, 0, 0), "Out", "Quad", 0.2, true)
+                        callback(option)
+                        wait(0.2)
+                        dropdownMenu.Visible = false
+                    end)
+                end
+                
+                -- Evento de clique no botão principal
+                dropdownButton.MouseButton1Click:Connect(function()
+                    menuOpen = not menuOpen
+                    if menuOpen then
+                        dropdownMenu.Visible = true
+                        dropdownMenu:TweenSize(UDim2.new(1, 0, 0, menuSize), "Out", "Quad", 0.2, true)
+                    else
+                        dropdownMenu:TweenSize(UDim2.new(1, 0, 0, 0), "Out", "Quad", 0.2, true)
+                        wait(0.2)
+                        dropdownMenu.Visible = false
+                    end
+                end)
+                
+                -- Atualizar tamanhos
+                elementsContainer.Size = UDim2.new(1, 0, 0, elementsContainer.Size.Y.Offset + 50)
+                sectionFrame.Size = UDim2.new(1, -20, 0, 25 + elementsContainer.Size.Y.Offset)
+                tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabFrame.CanvasSize.Y.Offset + 50)
+                
+                return dropdownButton
+            end
+            
+            -- Função para adicionar textbox
+            function section:addTextbox(text, default, callback)
+                local textboxContainer = Instance.new("Frame")
+                local textboxLabel = Instance.new("TextLabel")
+                local textbox = Instance.new("TextBox")
+                
+                -- Container do textbox
+                textboxContainer.Name = text .. "Textbox"
+                textboxContainer.Parent = elementsContainer
+                textboxContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                textboxContainer.BorderSizePixel = 0
+                textboxContainer.Position = UDim2.new(0, 0, 0, elementsContainer.Size.Y.Offset)
+                textboxContainer.Size = UDim2.new(1, 0, 0, 50)
+                
+                -- Label do textbox
+                textboxLabel.Name = "TextboxLabel"
+                textboxLabel.Parent = textboxContainer
+                textboxLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                textboxLabel.BackgroundTransparency = 1
+                textboxLabel.Position = UDim2.new(0, 10, 0, 0)
+                textboxLabel.Size = UDim2.new(1, -20, 0, 20)
+                textboxLabel.Font = Enum.Font.SourceSans
+                textboxLabel.Text = text
+                textboxLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+                textboxLabel.TextSize = 15
+                textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
+                
+                -- Textbox
+                textbox.Name = "Textbox"
+                textbox.Parent = textboxContainer
+                textbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                textbox.BorderSizePixel = 0
+                textbox.Position = UDim2.new(0, 10, 0, 20)
+                textbox.Size = UDim2.new(1, -20, 0, 25)
+                textbox.Font = Enum.Font.SourceSans
+                textbox.PlaceholderText = "Enter text..."
+                textbox.Text = default or ""
+                textbox.TextColor3 = Color3.fromRGB(200, 200, 200)
+                textbox.TextSize = 15
+                
+                -- Evento FocusLost
+                textbox.FocusLost:Connect(function()
+                    callback(textbox.Text)
+                end)
+                
+                -- Atualizar tamanhos
+                elementsContainer.Size = UDim2.new(1, 0, 0, elementsContainer.Size.Y.Offset + 50)
+                sectionFrame.Size = UDim2.new(1, -20, 0, 25 + elementsContainer.Size.Y.Offset)
+                tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabFrame.CanvasSize.Y.Offset + 50)
+                
+                return textbox
+            end
+            
+            -- Função para adicionar botão
+            function section:addButton(text, callback)
+                local buttonContainer = Instance.new("Frame")
+                local button = Instance.new("TextButton")
+                
+                -- Container do botão
+                buttonContainer.Name = text .. "Button"
+                buttonContainer.Parent = elementsContainer
+                buttonContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+                buttonContainer.BorderSizePixel = 0
+                buttonContainer.Position = UDim2.new(0, 0, 0, elementsContainer.Size.Y.Offset)
+                buttonContainer.Size = UDim2.new(1, 0, 0, 40)
+                
+                -- Botão
+                button.Name = "Button"
+                button.Parent = buttonContainer
+                button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                button.BorderSizePixel = 0
+                button.Position = UDim2.new(0, 10, 0.5, -15)
+                button.Size = UDim2.new(1, -20, 0, 30)
+                button.Font = Enum.Font.SourceSans
+                button.Text = text
+                button.TextColor3 = Color3.fromRGB(200, 200, 200)
+                button.TextSize = 15
+                
+                -- Evento de clique
+                button.MouseButton1Click:Connect(function()
+                    button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+                    wait(0.1)
+                    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    callback()
+                end)
+                
+                -- Atualizar tamanhos
+                elementsContainer.Size = UDim2.new(1, 0, 0, elementsContainer.Size.Y.Offset + 40)
+                sectionFrame.Size = UDim2.new(1, -20, 0, 25 + elementsContainer.Size.Y.Offset)
+                tabFrame.CanvasSize = UDim2.new(0, 0, 0, tabFrame.CanvasSize.Y.Offset + 40)
+                
+                return button
+            end
+            
+            return section
+        end
+        
+        return tab
+    end
+    
+    return UI
+end
+
+return Library
