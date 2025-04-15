@@ -12,7 +12,7 @@ elseif placeId == 7449423635 then
 end
 
 -- Create UI Interface
-local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/DragonSCRIPTS/DragonHUB/refs/heads/main/teste/UI%20Library"))()
 local Window = UILibrary.CreateLib("Farm Script", "Ocean")
 
 -- Tabs
