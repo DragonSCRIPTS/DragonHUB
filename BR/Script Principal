@@ -1,0 +1,8 @@
+-- Script Principal
+-- Apenas carrega a configuração da UI que, por sua vez, já carrega tudo o mais
+
+-- Carrega o arquivo de configuração da UI
+local UI = loadstring(game:HttpGet("SEU_LINK_PARA_UICONFIG"))()
+
+-- O resto do seu script principal pode ficar aqui
+print("UI inicializada com sucesso!")
