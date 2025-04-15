@@ -2,7 +2,7 @@
 -- Configuração da UI - Define os menus, botões, toggles e suas funções
 
 -- Carrega a biblioteca principal
-local UILibrary = loadstring(game:HttpGet("SEU_LINK_PARA_UILIB"))()
+local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/DragonSCRIPTS/DragonHUB/refs/heads/main/BR/UILibrary.lua"))()
 
 -- Carrega o módulo de funções (opcional - você pode criar esse arquivo depois)
 local Functions = loadstring(game:HttpGet("SEU_LINK_PARA_FUNÇÕES"))()
