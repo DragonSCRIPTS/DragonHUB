@@ -1,189 +1,390 @@
--- Script para equipar arma e atacar automaticamente com interface gráfica
-
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local Mouse = LocalPlayer:GetMouse()
-
--- Configurações
-_G.SelectWeapon = "Melee"  -- Tipo de arma inicial
-local attackCooldown = 0.5  -- Intervalo entre ataques (em segundos)
-local autoAttackEnabled = false  -- Ataque automático desativado por padrão
-
--- Variáveis internas
-local lastAttackTime = 0
-local targetPart = nil
-local guiCreated = false
-
--- FUNÇÃO: Equipar arma selecionada
-local function equipWeapon()
-    local selected = _G.SelectWeapon
-    local toolToEquip = nil
-    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
-        if tool:IsA("Tool") then
-            if selected == "Melee" and tool.ToolTip == "Melee" then
-                toolToEquip = tool
-                break
-            elseif selected == "Sword" and tool.ToolTip == "Sword" then
-                toolToEquip = tool
-                break
-            elseif selected == "Fruit" and tool.ToolTip == "Blox Fruit" then
-                toolToEquip = tool
-                break
-            elseif selected == "Gun" and tool.ToolTip == "Gun" then
-                toolToEquip = tool
-                break
-            end
-        end
-    end
-    if toolToEquip then
-        Humanoid:EquipTool(toolToEquip)
-        print(selected .. " equipado com sucesso!")
-        return toolToEquip
-    else
-        warn("Erro: " .. selected .. " não encontrado no inventário!")
-        return nil
-    end
+-- World Check
+local First_Sea = false
+local Second_Sea = false
+local Third_Sea = false
+local placeId = game.PlaceId
+if placeId == 2753915549 then
+    First_Sea = true
+elseif placeId == 4442272183 then
+    Second_Sea = true
+elseif placeId == 7449423635 then
+    Third_Sea = true
 end
 
--- FUNÇÃO: Verificar cooldown do ataque
-local function canAttack()
-    return (tick() - lastAttackTime) >= attackCooldown
-end
+-- Create UI Interface
+local UILibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = UILibrary.CreateLib("Farm Script", "Ocean")
 
--- FUNÇÃO: Encontrar alvo próximo
-local function findTarget()
-    local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {Character}
-    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+-- Tabs
+local Main_Tab = Window:NewTab("Main")
+local Setting_Tab = Window:NewTab("Settings")
+local Misc_Tab = Window:NewTab("Misc")
 
-    local ray = workspace:Raycast(Mouse.UnitRay.Origin, Mouse.UnitRay.Direction * 100, rayParams)
-    return ray and ray.Instance
-end
+-- Sections
+local Main_Section = Main_Tab:NewSection("Farming")
+local Main_Setting = Setting_Tab:NewSection("Settings")
+local Misc_Section = Misc_Tab:NewSection("Miscellaneous")
 
--- FUNÇÃO: Lógica principal de ataque
-local function attack()
-    if not canAttack() then return end
+-- Variables
+local LevelFarmQuest = false
+local LevelFarmNoQuest = false
+local AutoFarmBossQuest = false
+local AutoFarmBossNoQuest = false
+local DisFarm = 25
+local FastAttack = true
+local FastAttackDelay = 0.125
+local FastAttackSelected = "Normal"
+local SelectWeaponFarm = "Melee"
 
-    local equippedTool = nil
-    for _, tool in ipairs(Character:GetChildren()) do
-        if tool:IsA("Tool") and tool.ToolTip == _G.SelectWeapon then
-            equippedTool = tool
-            break
+-- CHECK MONSTER FUNCTION
+function CheckLevel()
+    local Lv = game:GetService("Players").LocalPlayer.Data.Level.Value
+    if First_Sea then
+        if Lv == 1 or Lv <= 9 or _G.SelectMonster == "Bandit [Lv. 5]" then -- Bandit
+            Ms = "Bandit"
+            NameQuest = "BanditQuest1"
+            QuestLv = 1
+            NameMon = "Bandit"
+            CFrameQ = CFrame.new(1060.9383544922, 16.455066680908, 1547.7841796875)
+            CFrameMon = CFrame.new(1038.5533447266, 41.296249389648, 1576.5098876953)
+        elseif Lv == 10 or Lv <= 14 or _G.SelectMonster == "Monkey [Lv. 14]" then -- Monkey
+            Ms = "Monkey"
+            NameQuest = "JungleQuest"
+            QuestLv = 1
+            NameMon = "Monkey"
+            CFrameQ = CFrame.new(-1601.6553955078, 36.85213470459, 153.38809204102)
+            CFrameMon = CFrame.new(-1448.1446533203, 50.851993560791, 63.60718536377)
+        elseif Lv == 15 or Lv <= 29 or _G.SelectMonster == "Gorilla [Lv. 20]" then -- Gorilla
+            Ms = "Gorilla"
+            NameQuest = "JungleQuest"
+            QuestLv = 2
+            NameMon = "Gorilla"
+            CFrameQ = CFrame.new(-1601.6553955078, 36.85213470459, 153.38809204102)
+            CFrameMon = CFrame.new(-1142.6488037109, 40.462348937988, -515.39227294922)
+        elseif Lv == 30 or Lv <= 39 or _G.SelectMonster == "Pirate [Lv. 35]" then -- Pirate
+            Ms = "Pirate"
+            NameQuest = "BuggyQuest1"
+            QuestLv = 1
+            NameMon = "Pirate"
+            CFrameQ = CFrame.new(-1140.1761474609, 4.752049446106, 3827.4057617188)
+            CFrameMon = CFrame.new(-1201.0881347656, 40.628940582275, 3857.5966796875)
         end
     end
-
-    if equippedTool then
-        equippedTool:Activate()
-
-        if _G.SelectWeapon == "Gun" then
-            local target = findTarget()
-            if target then
-                local bullet = Instance.new("Part")
-                bullet.Size = Vector3.new(0.5, 0.5, 2)
-                bullet.CFrame = CFrame.lookAt(Mouse.Hit.Position, target.Position)
-                bullet.Anchored = true
-                bullet.CanCollide = false
-                bullet.BrickColor = BrickColor.new("Bright red")
-                bullet.Parent = workspace
-                delay(0.2, function() bullet:Destroy() end)
-            end
-        else
-            local anim = Instance.new("Animation")
-            anim.AnimationId = "rbxassetid://184517545"
-            local track = Humanoid:LoadAnimation(anim)
-            track:Play()
-            track:AdjustSpeed(1.5)
-        end
-
-        lastAttackTime = tick()
-    end
+    return {
+        Ms = Ms,
+        NameQuest = NameQuest,
+        QuestLv = QuestLv,
+        NameMon = NameMon,
+        CFrameQ = CFrameQ,
+        CFrameMon = CFrameMon
+    }
 end
 
--- FUNÇÃO: Configurar ataque automático
-local function setupAutoAttack()
-    UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            attack()
-        end
-    end)
-
-    RunService.RenderStepped:Connect(function()
-        if autoAttackEnabled and canAttack() then
-            attack()
-        end
+-- EQUIP WEAPON
+function EquipTool(Tool)
+    pcall(function()
+        game.Players.LocalPlayer.Character.Humanoid:EquipTool(game.Players.LocalPlayer.Backpack[Tool])
     end)
 end
 
--- FUNÇÃO: Criar interface gráfica
-local function createGUI()
-    if guiCreated then return end
+-- TWEEN PLAYER
+function Tween(P1)
+    local Distance = (P1.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+    local Speed = 350
+    if Distance > 1 then
+        Speed = 350
+    end
+    game:GetService("TweenService"):Create(
+        game.Players.LocalPlayer.Character.HumanoidRootPart,
+        TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear),
+        {CFrame = P1}
+    ):Play()
+    if _G.StopTween then
+        game:GetService("TweenService"):Create(
+            game.Players.LocalPlayer.Character.HumanoidRootPart,
+            TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear),
+            {CFrame = P1}
+        ):Cancel()
+    end
+end
 
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "WeaponSelector"
-    screenGui.Parent = LocalPlayer.PlayerGui
+-- AUTO CLICK
+function AutoClick()
+    game:GetService('VirtualUser'):CaptureController()
+    game:GetService('VirtualUser'):Button1Down(Vector2.new(1280, 672))
+end
 
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 200, 0, 200)
-    mainFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
-    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    mainFrame.BorderSizePixel = 0
-    mainFrame.Parent = screenGui
+-- Disable Camera Shaker
+task.spawn(function()
+    while wait() do
+        local CameraShakerR = require(game.ReplicatedStorage.Util.CameraShaker)
+        CameraShakerR:Stop()
+    end
+end)
 
-    local title = Instance.new("TextLabel")
-    title.Text = "Seletor de Armas"
-    title.Font = Enum.Font.GothamBold
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.BackgroundTransparency = 1
-    title.Size = UDim2.new(1, 0, 0, 30)
-    title.Parent = mainFrame
-
-    local weaponButtons = {}
-    local buttonSize = UDim2.new(1, 0, 0, 40)
-    local buttonPos = UDim2.new(0, 0, 0, 30)
-
-    for i, weapon in ipairs({"Melee", "Sword", "Fruit", "Gun"}) do
-        local btn = Instance.new("TextButton")
-        btn.Text = weapon
-        btn.Font = Enum.Font.Gotham
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        btn.Size = buttonSize
-        btn.Position = buttonPos
-        btn.Parent = mainFrame
-
-        btn.MouseButton1Click:Connect(function()
-            _G.SelectWeapon = weapon
-            equipWeapon()
-            print("Arma selecionada: " .. weapon)
+-- Player Body Velocity for no-clip
+spawn(function()
+    while task.wait() do
+        pcall(function()
+            if LevelFarmNoQuest or LevelFarmQuest or AutoFarmBossNoQuest or AutoFarmBossQuest then
+                if not game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip") then
+                    local Noclip = Instance.new("BodyVelocity")
+                    Noclip.Name = "BodyClip"
+                    Noclip.Parent = game:GetService("Players").LocalPlayer.Character.HumanoidRootPart
+                    Noclip.MaxForce = Vector3.new(100000, 100000, 100000)
+                    Noclip.Velocity = Vector3.new(0, 0, 0)
+                end
+            else
+                if game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip") then
+                    game:GetService("Players").LocalPlayer.Character.HumanoidRootPart:FindFirstChild("BodyClip"):Destroy()
+                end
+            end
         end)
-
-        table.insert(weaponButtons, btn)
-        buttonPos = UDim2.new(0, 0, 0, buttonPos.Y.Offset + 40)
     end
+end)
 
-    local autoToggle = Instance.new("TextButton")
-    autoToggle.Text = "Ataque Automático: Desativado"
-    autoToggle.Font = Enum.Font.Gotham
-    autoToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    autoToggle.Size = buttonSize
-    autoToggle.Position = UDim2.new(0, 0, 0, buttonPos.Y.Offset)
-    autoToggle.Parent = mainFrame
-
-    autoToggle.MouseButton1Click:Connect(function()
-        autoAttackEnabled = not autoAttackEnabled
-        autoToggle.Text = "Ataque Automático: " .. (autoAttackEnabled and "Ativado" or "Desativado")
+-- Farming Clip Tween
+spawn(function()
+    pcall(function()
+        game:GetService("RunService").Stepped:Connect(function()
+            if LevelFarmNoQuest or LevelFarmQuest or AutoFarmBossNoQuest or AutoFarmBossQuest then
+                for _, v in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = false
+                    end
+                end
+            end
+        end)
     end)
+end)
 
-    guiCreated = true
+-- Farm Mode
+spawn(function()
+    while task.wait() do
+        pcall(function()
+            Farm_Mode = CFrame.new(0, DisFarm, 0)
+        end)
+    end
+end)
+
+-- Weapon Selection
+local WeaponList = {"Melee", "Blox Fruit", "Sword", "Gun"}
+Main_Setting:addDropdown("Select Weapon", SelectWeaponFarm, WeaponList, function(weaponfunc)
+    SelectWeaponFarm = weaponfunc
+end)
+
+task.spawn(function()
+    while wait() do
+        pcall(function()
+            if SelectWeaponFarm == "Melee" then
+                for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                    if v.ToolTip == "Melee" then
+                        if game.Players.LocalPlayer.Backpack:FindFirstChild(tostring(v.Name)) then
+                            SelectWeapon = v.Name
+                        end
+                    end
+                end
+            elseif SelectWeaponFarm == "Sword" then
+                for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                    if v.ToolTip == "Sword" then
+                        if game.Players.LocalPlayer.Backpack:FindFirstChild(tostring(v.Name)) then
+                            SelectWeapon = v.Name
+                        end
+                    end
+                end
+            elseif SelectWeaponFarm == "Gun" then
+                for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                    if v.ToolTip == "Gun" then
+                        if game.Players.LocalPlayer.Backpack:FindFirstChild(tostring(v.Name)) then
+                            SelectWeapon = v.Name
+                        end
+                    end
+                end
+            elseif SelectWeaponFarm == "Blox Fruit" then
+                for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                    if v.ToolTip == "Blox Fruit" then
+                        if game.Players.LocalPlayer.Backpack:FindFirstChild(tostring(v.Name)) then
+                            SelectWeapon = v.Name
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Fast Attack Settings
+local AttackList = {"Slow", "Normal", "Fast"}
+Main_Setting:addDropdown("Fast Attack Delay", FastAttackSelected, AttackList, function(Value)
+    FastAttackSelected = Value
+end)
+
+spawn(function()
+    while task.wait() do
+        if FastAttackSelected == "Fast" then
+            FastAttackDelay = 0
+        elseif FastAttackSelected == "Normal" then
+            FastAttackDelay = 0.125
+        elseif FastAttackSelected == "Slow" then
+            FastAttackDelay = 0.650
+        end
+    end
+end)
+
+-- Distance Farm Setting
+Main_Setting:addTextbox("Distance Farm", DisFarm, function(Value)
+    DisFarm = Value
+end)
+
+-- Attack Function
+function attackEnemies(enemyTarget)
+    local plr = game:GetService("Players").LocalPlayer
+    local RegisterAttack = game:GetService("ReplicatedStorage").Modules.Net["RE/RegisterAttack"]
+    local RegisterHit = game:GetService("ReplicatedStorage").Modules.Net["RE/RegisterHit"]
+    local ShootGunEvent = game:GetService("ReplicatedStorage").Modules.Net["RE/ShootGunEvent"]
+    local toolEquiped = plr.Character:FindFirstChildOfClass("Tool")
+
+    if enemyTarget and (enemyTarget.Position - plr.Character.HumanoidRootPart.Position).Magnitude < 55 then
+        if (toolEquiped.ToolTip == "Melee" or toolEquiped.ToolTip == "Sword") then
+            RegisterAttack:FireServer(FastAttackDelay)
+            RegisterHit:FireServer(enemyTarget, {})
+        end
+
+        if toolEquiped.ToolTip == "Gun" then
+            ShootGunEvent:FireServer(enemyTarget.Position, {[1] = enemyTarget})
+        end
+    end
 end
 
--- Lógica principal
-createGUI()
-equipWeapon()
-setupAutoAttack()
+function FastAttacked()
+    local plr = game:GetService("Players").LocalPlayer
+
+    for _, Enemy in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+        attackEnemies(Enemy.HumanoidRootPart)
+    end
+
+    for _, PlayerName in pairs(game:GetService('Workspace').Characters:GetChildren()) do
+        if PlayerName.Name ~= plr.Name then
+            attackEnemies(PlayerName.HumanoidRootPart)
+        end
+    end
+end
+
+-- Fast Attack Toggle
+Main_Setting:addToggle('Fast Attack', FastAttack, function(Value)
+    FastAttack = Value
+end)
+
+task.spawn(function()
+    while task.wait() do
+        if FastAttack then
+            pcall(function()
+                repeat task.wait()
+                    FastAttacked()
+                    local CameraShakerR = require(game.ReplicatedStorage.Util.CameraShaker)
+                    CameraShakerR:Stop()
+                until not FastAttack
+            end)
+        end
+    end
+end)
+
+-- Auto Farm Level Function
+function AutoFarmLevel()
+    local QuestData = CheckLevel()
+    if LevelFarmQuest then
+        if game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == false then
+            Tween(QuestData.CFrameQ)
+            if (QuestData.CFrameQ.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= 5 then
+                wait(0.5)
+                game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("StartQuest", QuestData.NameQuest, QuestData.QuestLv)
+            end
+        elseif game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == true then
+            for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+                if v.Name == QuestData.Ms and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                    repeat task.wait()
+                        if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                            EquipTool(SelectWeapon)
+                            Tween(v.HumanoidRootPart.CFrame * Farm_Mode)
+                        end
+                    until not LevelFarmQuest or not v.Parent or v.Humanoid.Health <= 0
+                end
+            end
+            
+            if not game:GetService("Workspace").Enemies:FindFirstChild(QuestData.Ms) then
+                Tween(QuestData.CFrameMon)
+            end
+        end
+    elseif LevelFarmNoQuest then
+        for i, v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+            if v.Name == QuestData.Ms and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                repeat task.wait()
+                    if v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") and v.Humanoid.Health > 0 then
+                        EquipTool(SelectWeapon)
+                        Tween(v.HumanoidRootPart.CFrame * Farm_Mode)
+                    end
+                until not LevelFarmNoQuest or not v.Parent or v.Humanoid.Health <= 0
+            end
+        end
+        
+        if not game:GetService("Workspace").Enemies:FindFirstChild(QuestData.Ms) then
+            Tween(QuestData.CFrameMon)
+        end
+    end
+end
+
+-- Auto Farm Level Toggles
+Main_Section:addToggle("Auto Farm Level (Quest)", LevelFarmQuest, function(Value)
+    LevelFarmQuest = Value
+end)
+
+Main_Section:addToggle("Auto Farm Level (No Quest)", LevelFarmNoQuest, function(Value)
+    LevelFarmNoQuest = Value
+end)
+
+-- Farm Level Loops
+spawn(function()
+    while task.wait() do
+        if LevelFarmQuest or LevelFarmNoQuest then
+            pcall(function()
+                AutoFarmLevel()
+            end)
+        end
+    end
+end)
+
+-- Misc Functions
+Misc_Section:addButton("Redeem All Codes", function()
+    local CodesList = {
+        "JULYUPDATE",
+        "GAMERROBOT_YT",
+        "SUB2GAMERROBOT_RESET1",
+        "THEGREATACE",
+        "SUB2GAMERROBOT_EXP1",
+        "StrawHatMaine",
+        "Sub2OfficialNoobie",
+        "SUB2NOOBMASTER123",
+        "Sub2UncleKizaru",
+        "Sub2Daigrock",
+        "Axiore",
+        "TantaiGaming",
+        "STRAWHATMAINE"
+    }
+    
+    for _, v in pairs(CodesList) do
+        game:GetService("ReplicatedStorage").Remotes.Redeem:InvokeServer(v)
+    end
+end)
+
+Misc_Section:addButton("Devil Fruit Shop", function()
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("GetFruits")
+    game:GetService("Players").LocalPlayer.PlayerGui.Main.FruitShop.Visible = true
+end)
+
+Misc_Section:addToggle("Auto Click", false, function(Value)
+    _G.AutoClick = Value
+    while _G.AutoClick do
+        AutoClick()
+        wait(0.1)
+    end
+end)
